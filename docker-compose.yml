@@ -1,0 +1,46 @@
+version: '3.4'
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend.Dockerfile
+    ports:
+      - 8080:8080
+    depends_on:
+      - mongo
+    volumes:
+      - static_resources:/app/actus-webapp/src/main/resources/static:ro
+    command: [ "gradle", "bootRun" ]
+
+  mongo:
+    build:
+      context: .
+      dockerfile: mongo.Dockerfile
+      target: base
+    expose:
+      - 27017
+    command: [ "mongod", "--bind_ip", "0.0.0.0" ]
+
+  mongo-seed:
+    build:
+      context: .
+      dockerfile: mongo.Dockerfile
+      target: seed
+    depends_on:
+      - mongo
+
+  app:
+    build:
+      context: .
+      dockerfile: frontend.Dockerfile
+    ports:
+      - 3000:3000
+    volumes:
+      - static_resources:/app/src/main/resources/static
+    depends_on:
+      - backend
+      - mongo-seed
+      - mongo
+
+volumes:
+  static_resources:
